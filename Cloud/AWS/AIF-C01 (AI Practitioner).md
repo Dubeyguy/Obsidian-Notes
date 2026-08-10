@@ -317,11 +317,34 @@ When prompt engineering and RAG are insufficient for your requirements, model we
         
 - **Model Distillation:** Training a smaller, faster "student" model to replicate the predictions and behavior of a much larger "teacher" model. This lowers deployment costs and response latency while retaining higher accuracy.
 
+## 5. Model Evaluation & AWS Tools
 
-## 5. Amazon Bedrock Ecosystem & Core APIs
+### Evaluation Metrics
+
+- **ROUGE (Recall-Oriented Understudy for Gisting Evaluation):** Measures word overlap between generated text and reference text. Used primarily for **Summarization**.
+    
+- **BLEU (Bilingual Evaluation Understudy):** Evaluates precision of generated sequences against reference text. Used primarily for **Translation**.
+    
+- **Human Evaluation:** Used when qualitative traits (like tone, brand voice, or nuanced helpfulness) cannot be scored mathematically. Bedrock offers automatic evaluations alongside human evaluation workflows using internal teams or AWS-managed workforces.
+
+
+### AWS Developer Tools
+
+- **Amazon Q Developer:** AI-powered assistant for coding, debugging, refactoring, and generating infrastructure-as-code inside IDEs and AWS consoles.
+    
+- **Amazon Q Business:** Fully managed corporate assistant connected to enterprise data stores (SharePoint, S3, Salesforce) with built-in access control (IAM/Identity Center).
+    
+- **Amazon SageMaker JumpStart:** A hub providing pre-trained open-weight models, algorithms, and end-to-end solution templates that can be deployed onto dedicated SageMaker instances.
+
+## 6. Amazon Bedrock Ecosystem & Core APIs
 
 Amazon Bedrock is AWS's serverless managed service for Foundation Models. You must know these specific features for scenario-based questions:
 
+### Pricing & Deployment Modes
+
+- **On-Demand:** Pay per 1,000 input and output tokens processed. Best for unpredictable or lower-volume workloads.
+    
+- **Provisioned Throughput:** Guarantees a dedicated amount of throughput (measured in Model Units) for continuous, high-volume workloads. Required for fine-tuned custom models on Bedrock.
 ### Managed Features
 
 - **Bedrock Knowledge Bases:** Fully managed RAG. Handles S3 ingestion, automatic chunking, embedding generation, OpenSearch indexing, and context injection into model prompts automatically.
@@ -349,28 +372,289 @@ Amazon Bedrock is AWS's serverless managed service for Foundation Models. You mu
 - `Converse` / `ConverseStream`: Unified, multi-turn conversational API that standardizes payload formats across different model providers (Anthropic, Meta, Amazon Titan, Cohere).
 
 
-### Pricing & Deployment Modes
+To allow a Foundation Model to interact with the outside world, Amazon Bedrock uses a construct called an **Action Group**. The Agent doesn't execute API calls itself; instead, it acts as an intelligent orchestrator that delegates the actual work to an AWS Lambda function.
 
-- **On-Demand:** Pay per 1,000 input and output tokens processed. Best for unpredictable or lower-volume workloads.
+![Bedrock Agent orchestration via Action Groups, AI generated](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRt5147yQIYTE3daWl0oqSJNjGy20Tm8hrg81RSBQ0cg0O5mfQcxSOFHBs&s=10)
+
+> **The Big Picture:** The Foundation Model (left) uses Action Groups to analyze intent and format requests, while delegating the actual execution to a Lambda function which triggers backend workloads (right).
+
+## The Anatomy of an Action Group
+
+To bridge the gap between the generative model and your backend systems, an Action Group requires three key elements:
+
+1. **The Blueprint (OpenAPI or Function Schema):** You provide the Agent with a schema (usually in JSON or YAML) that defines the API paths, HTTP methods, and required parameters. This tells the Foundation Model exactly _what_ operations are available and what data it needs to collect from the user to execute them.
+
+2. **The Execution Engine (AWS Lambda):** This is where your custom Python or Go code lives. The Lambda function receives the instructions from Bedrock, executes the API call, and formats the raw response.
+
+3. **The Permission Layer (IAM):** For the Agent to securely trigger the execution, the Lambda function must have a resource-based policy explicitly granting `bedrock.amazonaws.com` permission to invoke it.
+
+
+## The Execution Flow
+
+When a user submits a prompt that requires an external action, Bedrock orchestrates a precise, multi-step process:
+
+**1.Intent Recognition:**
+
+The Agent parses the user's prompt and evaluates the attached schemas to determine which specific API operation (if any) can fulfill the request.
+
+**2.Parameter Elicitation:** Triggers only if required data is missing.
+
+If the user's prompt lacks mandatory parameters defined in the schema, the Agent halts execution and automatically asks the user follow-up questions until the payload is complete.
+
+**3.Lambda Invocation:**
+
+Bedrock sends a structured JSON input event to your Lambda function. This payload contains the specific `apiPath`, `httpMethod`, and the populated `parameters` extracted from the conversation.
+
+**4.Execution & Return:** Maximum 15-minute Lambda timeout.
+
+Your code parses the Bedrock event, executes the actual system call (like querying a database or hitting a third-party REST API), and returns a formatted JSON response block back to the Bedrock service.
+
+**5.Observation & Generation:**
+
+The Foundation Model ingests the raw JSON output from the Lambda function, synthesizes the data, and generates a natural, conversational response for the user.
+
+### Handling Multi-Step Tasks
+
+For complex requests, the Agent operates on a **ReAct (Reasoning and Acting)** loop. After Step 5, the Agent evaluates the Lambda's output. If it determines that the task requires further action to fully answer the user's original prompt, it will loop back to Step 1, select a _different_ API operation, and invoke another Action Group. It continues this cycle dynamically until the overarching goal is met.
+
+To fully master this module, you need to understand how to tune the model's behavior, how to grade its performance, and where to store your data on AWS.
+
+## 1. Controlling the Output (Inference Parameters)
+
+Even with the perfect prompt and architecture, a model can behave wildly differently depending on its inference parameters. These are the "dials" you turn before hitting send.
+
+|**Parameter**|**What It Does**|**When to Adjust It**|
+|---|---|---|
+|**Temperature**|Controls randomness. A value of `0` makes the model highly deterministic and repetitive, picking the most likely next word. A value closer to `1` makes it creative.|Use `0` for code generation, math, or strict data extraction. Use `0.7+` for creative writing or brainstorming.|
+|**Top-P (Nucleus Sampling)**|Controls the "pool" of words the model chooses from. If set to `0.9`, the model only considers the words that make up the top 90% of probable next words, ignoring the weirdest 10%.|Adjust this _instead_ of Temperature to control vocabulary diversity without losing coherence.|
+|**Top-K**|Similar to Top-P, but limits the pool to a hard number (e.g., only pick from the top 50 most likely next words).|Useful for stopping the model from going completely off the rails on long generations.|
+|**Stop Sequences**|A specific character or word (like `</response>`) that tells the model to immediately stop generating text.|Critical for forcing strict JSON outputs or preventing the model from rambling past the answer.|
+
+## 2. Grading the AI (Evaluation Metrics)
+
+Because generative AI doesn't produce simple "true/false" answers, standard ML metrics don't work. The exam expects you to map specific evaluation frameworks to specific use cases.
+
+- **ROUGE:** Used primarily to evaluate **summarization**. It measures how much of the original human-created reference text overlaps with the AI's generated summary.
+
+- **BLEU:** The standard metric for **language translation**. It scores how similar the AI's translated text is to a professional human translation.
+
+- **BERTScore:** Used for **semantic similarity**. Instead of checking if the AI used the exact same words as the reference, it uses embeddings to check if the AI captured the same _meaning_.
+
+- **Perplexity:** Measures how "confused" or "surprised" a model is by a piece of text. Lower perplexity means the model is highly confident in its output.
+
+- **Toxicity/Bias Scores:** Automated metrics used in conjunction with tools like Amazon SageMaker Clarify to ensure the model isn't generating harmful or skewed content.
+
+
+## 3. Vector Databases on AWS
+
+When you build a RAG architecture (like Amazon Bedrock Knowledge Bases), you need a place to store the vector embeddings. The exam tests your knowledge of which AWS services natively support vector storage.
+
+- **Amazon OpenSearch Service:** The most common enterprise choice. It has native vector database capabilities and integrates seamlessly with Bedrock Knowledge Bases for heavy-duty, scalable search.
+
+- **Amazon Aurora (PostgreSQL) / Amazon RDS:** If you are already using a relational database, you can use the `pgvector` extension to store and search vector embeddings alongside your traditional tabular data.
+
+- **Amazon Neptune:** AWS's graph database service, which is increasingly used when relationships _between_ data points are just as important as the data itself.
+
+
+---
+
+
+## Domain 4: Guidelines for Responsible AI
+
+Domain 4 represents **14% of the AWS Certified AI Practitioner (AIF-C01) exam**. While previous domains focus on how to build and deploy models, this domain focuses on ensuring those models operate **fairly, ethically, transparently, and safely** in enterprise environments.
+
+## 1. The 6 Pillars of Responsible AI
+
+AWS structures its Responsible AI framework around six core principles that you must map to specific real-world scenarios:
+
+|**Pillar**|**Core Concept**|**Practical Risk / Use Case**|
+|---|---|---|
+|**Fairness**|Models should treat all demographically distinct groups equitably without systemic disadvantage.|Preventing loan rejection algorithms from discriminating based on postal code, age, or gender.|
+|**Explainability**|Understanding _why_ a model made a specific prediction or decision.|Medical diagnosis models providing the visual features or factors that led to a cancer detection.|
+|**Transparency**|Clear disclosure to end-users that they are interacting with an AI system, including model capabilities and limits.|Chatbots explicitly stating "I am an AI assistant" and referencing data sources.|
+|**Privacy & Security**|Safeguarding sensitive training data and ensuring inputs/outputs do not leak PII or IP.|Ensuring patient medical notes are masked before being passed to an external LLM.|
+|**Robustness & Reliability**|Ensuring models perform consistently under normal conditions and gracefully resist adversarial inputs.|Preventing prompt injection attacks from hijacking a customer service bot.|
+|**Governance & Accountability**|Establishing human oversight, auditing trails, and organizational policies for AI lifecycles.|Maintaining a data lineage catalog to trace training data back to its legal source.|
+
+## 2. Taxonomy of AI Bias
+
+Bias can enter an AI system at any stage of the development lifecycle. The exam expects you to distinguish between the primary sources of bias:
+
+- **Sampling Bias:** Occurs when the training dataset is not representative of the real-world population where the model will be deployed (e.g., training a facial recognition system primarily on lighter skin tones).
     
-- **Provisioned Throughput:** Guarantees a dedicated amount of throughput (measured in Model Units) for continuous, high-volume workloads. Required for fine-tuned custom models on Bedrock.
-
-
-## 6. Model Evaluation & AWS Tools
-
-### Evaluation Metrics
-
-- **ROUGE (Recall-Oriented Understudy for Gisting Evaluation):** Measures word overlap between generated text and reference text. Used primarily for **Summarization**.
+- **Measurement Bias:** Occurs when the data features or labels chosen for training are noisy, flawed, or proxy measures that introduce systemic error (e.g., using "number of arrests" as a proxy for "crime rate").
     
-- **BLEU (Bilingual Evaluation Understudy):** Evaluates precision of generated sequences against reference text. Used primarily for **Translation**.
+- **Historical / Dataset Bias:** Occurs when the dataset accurately reflects real-world past data, but that past data contains historical human prejudices or societal inequalities.
     
-- **Human Evaluation:** Used when qualitative traits (like tone, brand voice, or nuanced helpfulness) cannot be scored mathematically. Bedrock offers automatic evaluations alongside human evaluation workflows using internal teams or AWS-managed workforces.
+- **Confirmation Bias:** Occurs when data collectors or annotators selectively gather or label data in a way that confirms their pre-existing beliefs.
+    
+
+## 3. Detecting Bias & Explaining Decisions: Amazon SageMaker Clarify
+
+To detect bias and explain model decisions on AWS, the standard service is **Amazon SageMaker Clarify**.
+
+```
+                           [ Data Prep ]
+                                 │
+                   Pre-Training Bias Detection
+                   (e.g., Class Imbalance)
+                                 │
+                           [ Model Training ]
+                                 │
+                  Post-Training Bias Detection
+                  (e.g., Difference in Acceptance Rates)
+                                 │
+                   Feature Attribution (SHAP)
+                   ("Why did the model output X?")
+```
+
+### Bias Detection Metrics
+
+- **Pre-Training Bias:** Detects imbalance in the dataset _before_ training starts (e.g., **Class Imbalance (CI)** measuring if one demographic group has far fewer samples than another).
+    
+- **Post-Training Bias:** Detects inequality in predictions _after_ the model is trained (e.g., **Difference in Positive Proportions in Predicted Labels (DPPL)** measuring if the model approves one group at a higher rate than another).
+    
+
+### Feature Attribution with SHAP
+
+SageMaker Clarify uses **SHAP (SHapley Additive exPlanations)** values based on cooperative game theory. It assigns each input feature (e.g., credit score, income, age) a positive or negative score representing how much that specific feature contributed to the final prediction.
+
+## 4. Operational Safety: Amazon Bedrock Guardrails
+
+For Generative AI applications, **Amazon Bedrock Guardrails** acts as an active safety filter evaluating both incoming user prompts and outgoing model responses.
+
+> **Key Exam Distinction:** Guardrails work _independently_ of the underlying Foundation Model. You can attach the same Guardrail policy across multiple different Bedrock models (Claude, Llama, Titan).
+
+- **Denied Topics:** Custom natural language descriptions of subjects the model must refuse to discuss (e.g., "Do not give financial investment advice").
+
+- **Content Filters:** Detects and blocks content across six harmful categories: _Hate, Insults, Sexual, Violence, Misconduct, and Prompt Attacks_ (Jailbreak / Prompt Injections).
+
+- **Word Filters:** Blocks specific custom terms, profanity, or internal competitor names.
+
+- **Sensitive Information Filters (PII):** Automatically redacts or blocks Personally Identifiable Information (SSNs, credit cards, phone numbers, email addresses) using pre-built identifiers or custom regular expressions (Regex).
+
+- **Contextual Grounding Checks:** Specifically mitigates **hallucinations in RAG applications**. It measures how well the model's output is grounded in the retrieved reference documents and how relevant the response is to the user query.
 
 
-### AWS Developer Tools
+## 5. Human Oversight: Amazon Augmented AI (Amazon A2I)
 
-- **Amazon Q Developer:** AI-powered assistant for coding, debugging, refactoring, and generating infrastructure-as-code inside IDEs and AWS consoles.
-    
-- **Amazon Q Business:** Fully managed corporate assistant connected to enterprise data stores (SharePoint, S3, Salesforce) with built-in access control (IAM/Identity Center).
-    
-- **Amazon SageMaker JumpStart:** A hub providing pre-trained open-weight models, algorithms, and end-to-end solution templates that can be deployed onto dedicated SageMaker instances.
+When automated predictions require human verification—due to low model confidence, high compliance risk, or ethical mandates—you integrate **Amazon Augmented AI (A2I)** into the workflow.
+
+**1.Model Inference:**
+
+Your machine learning model evaluates an input (e.g., an automated document processing request or loan application).
+
+**2.Condition Trigger:**Confidence Threshold Evaluation.
+
+The application checks the model's output confidence score against your pre-configured threshold rules (e.g., "If confidence is less than 85%").
+
+**3.Routing to Human Review:**Amazon A2I Workflow.
+
+If the threshold condition fails, the request is automatically routed to a human review workflow via Amazon A2I.
+
+**4.Human Verification:**
+
+Human reviewers (internal employees, vendor managed teams, or mechanical turk) access a custom web portal to review, correct, or approve the prediction.
+
+**5.Database Update & Audit Loop:** Continuous Learning.
+
+The human-verified result is sent back to the application database, and the corrected sample is saved to S3 to periodically retrain and improve the model.
+
+
+---
+
+
+**Domain 5: Security, Compliance, and Governance for AI Solutions** accounts for **14% of the AWS Certified AI Practitioner (AIF-C01) exam**. It focuses on protecting AI/ML pipelines, managing vulnerabilities like prompt injection, enforcing data privacy, and satisfying regulatory audit requirements on AWS.
+
+## 1. The AWS Shared Responsibility Model for AI
+
+The division of security responsibilities shifts depending on whether you use fully managed AI services or self-hosted ML infrastructure:
+
+|**Managed AI Services (e.g., Amazon Bedrock, Rekognition, Comprehend)**|**Self-Hosted / Infrastructure ML (e.g., SageMaker, EC2)**|
+|---|---|
+|**AWS Responsibilities:** Physical infrastructure, base model security, server patching, hypervisor, and service software.|**AWS Responsibilities:** Physical infrastructure, hardware maintenance, and hypervisor security.|
+|**Customer Responsibilities:** IAM access policies, input prompt data, Guardrail configuration, fine-tuning datasets, and output validation.|**Customer Responsibilities:** OS patching, network configurations (VPC, Security Groups), container security, data encryption, and model weight storage.|
+
+> **Key Exam Guarantee:** AWS **never** uses customer inputs (prompts), outputs, or fine-tuning datasets submitted through Amazon Bedrock to train base models or share with third parties.
+
+## 2. Data Protection & Network Isolation
+
+Securing training data, model artifacts, and vector embeddings requires combining core AWS security services:
+
+- **Amazon Macie:** Uses machine learning and pattern matching to automatically discover, classify, and protect sensitive data (such as PII, credit card numbers, or internal credentials) stored in S3 buckets _before_ it is ingested into an AI pipeline.
+
+- **AWS KMS (Key Management Service):** Encrypts data at rest using Customer Managed Keys (CMK) across S3 training buckets, SageMaker storage volumes, vector databases, and Bedrock fine-tuned model artifacts.
+
+- **AWS PrivateLink / VPC Endpoints:** Ensures API traffic between your private Amazon VPC and Amazon Bedrock or SageMaker travels exclusively over the private AWS network—never traversing the public internet.
+
+
+## 3. AI Threat Landscape & Defense Strategies
+
+Generative AI introduces attack vectors that traditional web security tools (like traditional WAFs) cannot detect on their own:
+
+```
+                            [ Attacker ]
+                                 │
+           ┌─────────────────────┴─────────────────────┐
+           ▼                                           ▼
+[ Direct Prompt Injection ]               [ Indirect Prompt Injection ]
+(Jailbreaking: "Ignore all               (Weaponized input inside retrieved
+ prior system rules...")                  RAG documents or web scraping)
+           │                                           │
+           └─────────────────────┬─────────────────────┘
+                                 ▼
+                     [ Bedrock Guardrails ]
+                    (Filters, Denied Topics,
+                  Contextual Grounding Checks)
+                                 │
+                                 ▼
+                      [ Foundation Model ]
+```
+
+- **Direct Prompt Injection (Jailbreaking):** Malicious user prompts designed to override system instructions and bypass ethical safeguards.
+
+- **Indirect Prompt Injection:** Malicious instructions embedded in external data (such as a poisoned PDF or scraped website) that a model reads during a RAG search or agent action.
+
+- **Data Poisoning:** Tampering with training or fine-tuning datasets to introduce hidden backdoors or skewed model behavior.
+
+- **Data Leakage / Inversion:** Extracting proprietary system prompts, confidential training data, or internal source code from model outputs.
+
+
+## 4. Governance, Lineage & Documentation
+
+Governance requires tracking the origin, transformations, and intended usage of models and data throughout their lifecycle.
+
+- **Amazon SageMaker Model Cards:** Standardized digital documentation (a "nutrition label" for AI models) recording business intent, training parameters, evaluation metrics, risk ratings, and ethical considerations.
+
+- **Amazon SageMaker Model Registry:** Centralized repository for versioning models, tracking data lineage, and managing formal approval workflows (e.g., Pending Approval -> Approved) before deployment.
+
+- **AWS Glue Data Catalog:** Provides metadata management and lineage tracking to document where raw data originated and how it was processed before training.
+
+
+## 5. Continuous Audit & Compliance Suite
+
+To satisfy regulatory standards (such as ISO, SOC 2, GDPR, or HIPAA), AWS provides an integrated suite of auditing tools:
+
+**1.Configuration Auditing (AWS Config):**
+
+AWS Config continuously evaluates resource settings to enforce compliance (e.g., verifying that all S3 buckets containing training data have default encryption enabled).
+
+**2.API Logging (AWS CloudTrail):**
+
+CloudTrail logs every API invocation across your AI services—recording who invoked `InvokeModel` in Bedrock or triggered a SageMaker training job, when, and from which IP.
+
+**3.Vulnerability Scanning (Amazon Inspector):**
+
+Automatically scans container images used in SageMaker endpoints and EC2 instances for software vulnerabilities and network exposure.
+
+**4.Automated Compliance (AWS Audit Manager):**Evidence Collection.
+
+Maps CloudTrail logs, Config rules, and Inspector scans directly to regulatory frameworks (like NIST or HIPAA) to automatically generate audit reports.
+
+**5.Compliance Reports (AWS Artifact):**Official Certification Access.
+
+Provides on-demand access to AWS's official third-party audit reports, ISO certifications, and SOC agreements to prove infrastructure compliance to auditors.
+
+
+---
+
