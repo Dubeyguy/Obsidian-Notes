@@ -4,24 +4,24 @@
 
 A **switch** is a device which connects multiple devices locally. It maintains a table called **MAC Address Table** which contains a list of all the MAC addresses associated with the ports of the switch
 
-![[Pasted image 20260825142816.png|277]]
+![](Pasted image 20260825142816.png|277)
 
 When the switch gets a request from a device who's MAC address is not in the list, it adds that in the list and forwards the packet to the destination MAC address
 
 If the destination MAC address is not in the list either, it broadcasts it to all the devices connected instead. This process is called flooding
 
-![[Pasted image 20260825143018.png|556]]
+![](Media/Pasted%20image%2020260825143018.png)
 
 ## VLANs
 
 A **VLAN** or **Virtual LAN** is used to divide the ports in a switch virtually to form separate networks that do not interfere with each other. This is useful for segmenting devices without using multiple separate switches
 
-![[Pasted image 20260825143510.png|519]]
+![](Media/Pasted%20image%2020260825143510.png)
 
 But just using VLANs can also cause issues.
 Creating multiple networks using **VLAN** and connecting them can lead to poor management and cost issues when you need to scale the network.
 
-![[Pasted image 20260825143736.png|526]]
+![](Media/Pasted%20image%2020260825143736.png)
 
 To solve this issue, IEEE created a protocol for VLANs called **802.1Q**, also known as VLAN tagging/trunking
 
@@ -29,7 +29,7 @@ To solve this issue, IEEE created a protocol for VLANs called **802.1Q**, also k
 
 **IEEE 802.1Q** (often called **dot1q**) is the industry-standard networking protocol for implementing Virtual Local Area Networks (VLANs) on Ethernet networks. It allows a single physical switch port or network cable to carry traffic for multiple isolated logical networks simultaneously—a process known as **VLAN trunking**.
 
-![[Pasted image 20260825144356.png|496]]
+![](Media/Pasted%20image%2020260825144356.png)
 
 When an Ethernet frame travels over a trunk link between switches or firewalls, 802.1Q inserts a **4-byte header (tag)** directly into the original Ethernet frame format:
 
@@ -42,10 +42,9 @@ When a switch sends a packet to another switch using the trunk port, it also att
 
 > For VLAN trunking to work, both the source and destination ports needs to be **Trunk ports**
 
-
 If we truncate the switches in such a way that they all form a loop, it is called a **Switching Loop**
 
-![[Pasted image 20260825144810.png]]
+![](Media/Pasted%20image%2020260825144810.png)
 
 In this case, if a switch receives a multicast or broadcast frame, those frames keep getting casted by all the other switches too, resulting in an endless cycle. This situation is called a **Broadcast Storm**
 
@@ -53,22 +52,22 @@ To solve this issue, the concept of a **Spanning Tree** was introduced
 
 ### Spanning Tree
 
-Inside a spanning tree, a single switch is designated as the **Root Bridge**. All the ports of the Root bridge are in forwarding state ( *i.e. They can both receive and forward network packets* ) . 
+Inside a spanning tree, a single switch is designated as the **Root Bridge**. All the ports of the Root bridge are in forwarding state ( _i.e. They can both receive and forward network packets_ ) .
 
 Then a single port is selected on all the other switches which provide the best path to the Root Bridge. These ports are also set to forwarding state
 
-All the other redundant ports on the other switches are put in a blocked state ( *i.e. These ports can not forward or receive network packets*) preventing the Broadcast Storm situation.
+All the other redundant ports on the other switches are put in a blocked state ( _i.e. These ports can not forward or receive network packets_) preventing the Broadcast Storm situation.
 
-![[Pasted image 20260825145457.png|496]]
+![](Media/Pasted%20image%2020260825145457.png)
 
 Another advantage of a Spanning Tree is that whenver a link to the root bridge is down, it recalculates and selects another link to connect that diconnected switch to the Root Bridge
 
-![[Pasted image 20260825150209.png|494]]
+![](Media/Pasted%20image%2020260825150209.png)
 
 They way switches communicate in a Spanning Tree is through BPDUs (**Bridge Protocol Data Units**)
-The root bridge sends out configuration BPDUs every 2 seconds by default 
+The root bridge sends out configuration BPDUs every 2 seconds by default
 
-![[Pasted image 20260826131759.png|575]]
+![488](Media/Pasted%20image%2020260826131759.png)
 
 Every BPDU frame contains
 
@@ -76,29 +75,55 @@ Every BPDU frame contains
 - **Root Path Cost** : Total cost to reach the root from the sending switch's perspective
 - **Bridge ID** : Shows who sent the BPDU
 - **Port ID** : Which port the BPDU was sent from
-Also, all the spanning tree timers get set inside the BPDU ( *Message Age, Max Age, Hello Time, FWD Delay*)
+  Also, all the spanning tree timers get set inside the BPDU ( _Message Age, Max Age, Hello Time, FWD Delay_)
 
 When a non root switch receives a BPDU from a root bridge, it updates the path cost, bridge ID and port ID and sends out that BPDU to the next switch from the **Designated Port**.
 
+Just like configuration BPDUs can only originate from root switch, the Topology Change Notification BPDUs can only originate from non root switches
+
+### Root Bridge Election
+
+The switch with the lowest **Bridge ID** becomes the root bridge.
+A bridge ID is 8 bytes total, with 2 bytes **Bridge Priority** and 6 bytes** MAC address**
+
+![](Media/Pasted%20image%2020260826134022.png)
+
+The first 4 bits of the Bridge Priority is **Priority Value** and the next 12 bits is **System ID Extension** (or VLAN ID)
+
+Every switch at start thinks they are the root bridge and have the same Priority Value and VLAN ID. Therefore the MAC address determines the root bridge
+
+> It is best practice to manually select the Root Bridge, since automatic selection isn't the best
+
+### Root Ports
+
+Root Ports are ports on the non root switches which have the best path to the root bridge. One root port on every non root switch is selected.
+
+They way root ports are selected is by selecting the port with the lowest **Root Path Cost**
+
+![](Media/Pasted%20image%2020260826134828.png)
+_In this case, the top port becomes the root port since it has a cost of 4 as opposed to 12 of the bottom port_
+
+In case where the cost of both the ports are equal, another factor is introduced. Now the port with the lowest neighbour **Bridge ID**, and so on
+
+![](Media/Pasted%20image%2020260826135345.png)
 
 ## Layer 3 Switch
 
 A layer 3 switch has the ability to route between networks just like a router
 
-![[Pasted image 20260825224803.png|475]]
-
+![](Media/Pasted%20image%2020260825224803.png)
 
 ## Router
 
-Routers are devices that connect two or more networks. not only do they route data between networks, they also act as a gateway to other networks. 
+Routers are devices that connect two or more networks. not only do they route data between networks, they also act as a gateway to other networks.
 
-![[Pasted image 20260826123309.png|530]]
+![](Media/Pasted%20image%2020260826123309.png)
 
 They primarily operate on layer 3 of the **OSI** model
 
 Routers do not know the entire network pathway. They only know the next **hop**. This is made possible by the use of a **Route Table**
 
-![[Pasted image 20260826123517.png]]
+![](Media/Pasted%20image%2020260826123517.png)
 
 ### Static Routing
 
@@ -106,7 +131,7 @@ Routers that have static routing have a manually configured, non - changing rout
 
 Static routing becomes messy and redundant very quickly as you try to scale the network.
 
-![[Pasted image 20260826124008.png|499]]
+![](Media/Pasted%20image%2020260826124008.png)
 
 In order to overcome this issue, **dyamic routing** was introduced.
 
@@ -117,29 +142,24 @@ Dynamic routing uses **routing protocols** in order to handle the routing based 
 Some common routing protocols are :
 
 - **OSPF (Open Shortest Path First):**
-    
-    - **Type:** IGP (Link-State).
-    - **Algorithm:** Dijkstra’s Shortest Path First (SPF).
-    - **How It Works:** Every router builds a complete map (topology database) of the entire network by exchanging Link-State Advertisements (LSAs). Networks are split into hierarchical "Areas" to conserve memory and CPU.
-    - **Best For:** Open-standard, multi-vendor enterprise LANs and internal networks.
-    
+  - **Type:** IGP (Link-State).
+  - **Algorithm:** Dijkstra’s Shortest Path First (SPF).
+  - **How It Works:** Every router builds a complete map (topology database) of the entire network by exchanging Link-State Advertisements (LSAs). Networks are split into hierarchical "Areas" to conserve memory and CPU.
+  - **Best For:** Open-standard, multi-vendor enterprise LANs and internal networks.
 - **EIGRP (Enhanced Interior Gateway Routing Protocol):**
-    
-    - **Type:** IGP (Advanced Distance-Vector / Hybrid).
-    - **Algorithm:** DUAL (Diffusing Update Algorithm).
-    - **How It Works:** Routers do not keep a map of the whole network; instead, they exchange routes with direct neighbors and calculate the fastest path using a combination of bandwidth and delay metrics. Features rapid convergence and low overhead.
-    - **Best For:** Cisco-heavy enterprise networks needing fast convergence and simple administration.
-    
+  - **Type:** IGP (Advanced Distance-Vector / Hybrid).
+  - **Algorithm:** DUAL (Diffusing Update Algorithm).
+  - **How It Works:** Routers do not keep a map of the whole network; instead, they exchange routes with direct neighbors and calculate the fastest path using a combination of bandwidth and delay metrics. Features rapid convergence and low overhead.
+  - **Best For:** Cisco-heavy enterprise networks needing fast convergence and simple administration.
 - **BGP (Border Gateway Protocol):**
-    
-    - **Type:** EGP (Path-Vector).
-    - **How It Works:** Connects independent Autonomous Systems (ASes) using unique AS numbers. Instead of focusing solely on speed or link cost, BGP routes based on granular network policies, hop-by-hop AS paths, and peering agreements.
-    - **Best For:** The global Internet backbones, multi-homed ISP connections, and interconnecting large data centers/clouds.
+  - **Type:** EGP (Path-Vector).
+  - **How It Works:** Connects independent Autonomous Systems (ASes) using unique AS numbers. Instead of focusing solely on speed or link cost, BGP routes based on granular network policies, hop-by-hop AS paths, and peering agreements.
+  - **Best For:** The global Internet backbones, multi-homed ISP connections, and interconnecting large data centers/clouds.
 
 > IGP: Interior Gateway Protocol
-> EGP: Exterior  Gateway Protocol
+> EGP: Exterior Gateway Protocol
 
-You tell the protocols 
+You tell the protocols
 
 - What interfaces or networks to use
 - Which networks to advertise
@@ -147,7 +167,7 @@ You tell the protocols
 
 In dynamic routing, routers advertise about the devices they know about to the other routers
 
-![[Pasted image 20260826124431.png|488]]
+![](Media/Pasted%20image%2020260826124431.png)
 
 Some advantages of dynamic routing are :
 
@@ -161,7 +181,7 @@ Some advantages of dynamic routing are :
 
 Instead of plugging dedicated physical router ports into every separate VLAN, all traffic flows in and out over one multiplexed physical trunk link.
 
-![[Pasted image 20260826125109.png|630]]
+![](Media/Pasted%20image%2020260826125109.png)
 
 **How It Works**
 
@@ -174,25 +194,25 @@ Instead of plugging dedicated physical router ports into every separate VLAN, al
 
 For situations where if a router breaks down in your network and you can't afford your network to be down, some redundancy protocols are made. Some of them are
 
-- **HSRP (Hot Standby Router Protocol)** 
+- **HSRP (Hot Standby Router Protocol)**
 - **VRRP (Virtual Router Redundancy Protocol)**
 
 **HSRP** (Hot Standby Router Protocol) and **VRRP** (Virtual Router Redundancy Protocol) are **First Hop Redundancy Protocols (FHRPs)**.
 
 They provide a continuous default gateway for devices on a network. Instead of configuring end-user devices with a physical router's IP address, devices point to a shared **Virtual IP (VIP)** address. HSRP or VRRP allows multiple routers to back up that VIP—if the primary active router dies, a standby router immediately takes over without breaking network connectivity or requiring configuration changes on host devices.
 
-![[Pasted image 20260826130026.png|502]]
+![](Media/Pasted%20image%2020260826130026.png)
+
 ### How They Work
 
 1. **Virtual Identity:** Two or more routers form a redundancy group. They share a Virtual IP address and a corresponding Virtual MAC address.
 2. **Election Process:** Routers negotiate roles based on a **priority value** (typically 1 to 254; default is 100). The router with the highest priority wins the election:
-    
-    - In **HSRP**, it becomes the **Active** router.
-    - In **VRRP**, it becomes the **Master** router.
-    
+   - In **HSRP**, it becomes the **Active** router.
+   - In **VRRP**, it becomes the **Master** router.
+
 3. **Heartbeats:** The primary router regularly transmits hello messages/advertisements to a multicast address.
 4. **Failover:** If the secondary (Standby/Backup) router stops receiving heartbeats from the primary within a set timer window (hold time), it assumes the primary has failed. It immediately assumes the Virtual IP and Virtual MAC, continuing to route host traffic seamlessly.
 
 ### Security Best Practices for Routers
 
-![[Pasted image 20260826131330.png]]
+![](Media/Pasted%20image%2020260826131330.png)
