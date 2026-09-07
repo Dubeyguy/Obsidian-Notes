@@ -1,27 +1,49 @@
 # Switches and VLANs
 
+## OSI Model
+
+The OSI or **Open Systems Interconnection** Model is a network model that separates the various components of a network and shows the flow of data from a device to another. It is very useful in resolving network issues
+
+It has seven layers : 
+
+- **Layer 1** ( *Physical Layer* ) : All of the physical hardware that connects two devices. Transmits raw data in the form of **bits**
+- **Layer 2** ( *Datalink Layer* ) : The **local** network communication. Bits are organized into units called **frames**. Switches primarily operate here using MAC addresses
+- **Layer 3** ( *Network Layer* ) : Frames are turned into **packets**. Routers use **IP addresses** to route packets to correct devices
+- **Layer 4** ( *Transport Layer* ) : Divides packets into smaller **units** for transmission using protocols like **TCP** or **UDP**. Uses port numbers to transport data to the correct service
+- Layer 5 ( *Session Layer* ) : Establishes, manages and terminates **connections**.
+- **Layer 6** ( *Presentation Layer* ) : Translates data into correct **format** for the applications. It handles **encryption** and **compression**.
+- **Layer 7** ( *Application Layer* ) : Interface between **applications** and network. Enabling web browsing, file transfers, etc
+
+## MAC Address
+
+It is a 6 byte hardcoded address present inside the NIC (Network Interface Card). It uniquely identifies the physical device
+
+The first three bytes represents the OUI (manufacturer)
+
+![314](Pasted%20image%2020260828102336.png)
+
+
+
 ## Basics of a Switch
 
 A **switch** is a device which connects multiple devices locally. It maintains a table called **MAC Address Table** which contains a list of all the MAC addresses associated with the ports of the switch
-
-![](Pasted image 20260825142816.png|277)
 
 When the switch gets a request from a device who's MAC address is not in the list, it adds that in the list and forwards the packet to the destination MAC address
 
 If the destination MAC address is not in the list either, it broadcasts it to all the devices connected instead. This process is called flooding
 
-![](Media/Pasted%20image%2020260825143018.png)
+![448](Media/Pasted%20image%2020260825143018.png)
 
 ## VLANs
 
 A **VLAN** or **Virtual LAN** is used to divide the ports in a switch virtually to form separate networks that do not interfere with each other. This is useful for segmenting devices without using multiple separate switches
 
-![](Media/Pasted%20image%2020260825143510.png)
+![451](Media/Pasted%20image%2020260825143510.png)
 
 But just using VLANs can also cause issues.
 Creating multiple networks using **VLAN** and connecting them can lead to poor management and cost issues when you need to scale the network.
 
-![](Media/Pasted%20image%2020260825143736.png)
+![499](Media/Pasted%20image%2020260825143736.png)
 
 To solve this issue, IEEE created a protocol for VLANs called **802.1Q**, also known as VLAN tagging/trunking
 
@@ -29,7 +51,7 @@ To solve this issue, IEEE created a protocol for VLANs called **802.1Q**, also k
 
 **IEEE 802.1Q** (often called **dot1q**) is the industry-standard networking protocol for implementing Virtual Local Area Networks (VLANs) on Ethernet networks. It allows a single physical switch port or network cable to carry traffic for multiple isolated logical networks simultaneously—a process known as **VLAN trunking**.
 
-![](Media/Pasted%20image%2020260825144356.png)
+![483](Media/Pasted%20image%2020260825144356.png)
 
 When an Ethernet frame travels over a trunk link between switches or firewalls, 802.1Q inserts a **4-byte header (tag)** directly into the original Ethernet frame format:
 
@@ -44,7 +66,7 @@ When a switch sends a packet to another switch using the trunk port, it also att
 
 If we truncate the switches in such a way that they all form a loop, it is called a **Switching Loop**
 
-![](Media/Pasted%20image%2020260825144810.png)
+![478](Media/Pasted%20image%2020260825144810.png)
 
 In this case, if a switch receives a multicast or broadcast frame, those frames keep getting casted by all the other switches too, resulting in an endless cycle. This situation is called a **Broadcast Storm**
 
@@ -58,16 +80,16 @@ Then a single port is selected on all the other switches which provide the best 
 
 All the other redundant ports on the other switches are put in a blocked state ( _i.e. These ports can not forward or receive network packets_) preventing the Broadcast Storm situation.
 
-![](Media/Pasted%20image%2020260825145457.png)
+![477](Media/Pasted%20image%2020260825145457.png)
 
 Another advantage of a Spanning Tree is that whenver a link to the root bridge is down, it recalculates and selects another link to connect that diconnected switch to the Root Bridge
 
-![](Media/Pasted%20image%2020260825150209.png)
+![470](Media/Pasted%20image%2020260825150209.png)
 
 They way switches communicate in a Spanning Tree is through BPDUs (**Bridge Protocol Data Units**)
 The root bridge sends out configuration BPDUs every 2 seconds by default
 
-![488](Media/Pasted%20image%2020260826131759.png)
+![472](Media/Pasted%20image%2020260826131759.png)
 
 Every BPDU frame contains
 
@@ -100,30 +122,53 @@ Root Ports are ports on the non root switches which have the best path to the ro
 
 They way root ports are selected is by selecting the port with the lowest **Root Path Cost**
 
-![](Media/Pasted%20image%2020260826134828.png)
+![537](Media/Pasted%20image%2020260826134828.png)
 _In this case, the top port becomes the root port since it has a cost of 4 as opposed to 12 of the bottom port_
 
 In case where the cost of both the ports are equal, another factor is introduced. Now the port with the lowest neighbour **Bridge ID**, and so on
 
-![](Media/Pasted%20image%2020260826135345.png)
+![484](Media/Pasted%20image%2020260826135345.png)
 
+### Designated Ports
+
+Just like root ports are selected per switch, desigated ports are selected per segment. A **segment** is the connection between two switches
+
+![465](Pasted%20image%2020260828094600.png)
+
+There is one designated port per segment and just like root ports, they are in **forward state**. On each segment, the port with the lowest **path cost** to the root bridge becomes the designated port
+
+![434](Pasted%20image%2020260828094825.png)
+
+The ports on segments which don't become designated ports are put in **Blocking State**.
+
+![421](Pasted%20image%2020260828095326.png)
+
+### Port States
+
+The various port states are as follows:
+
+- **Disabled** : The port is shut down or **STP** is turned off
+- **Blocking** : Receives BPDUs but cnnot forward data packets
+- **Listening** : Can receive and send BPDUs. Still cannot data frames
+- **Learning** : Sending and receiving BPDUs and also learning MAC addresses
+- **Forwarding** : Can receive and forward both BPDUs and data frames
 ## Layer 3 Switch
 
 A layer 3 switch has the ability to route between networks just like a router
 
-![](Media/Pasted%20image%2020260825224803.png)
+![469](Media/Pasted%20image%2020260825224803.png)
 
 ## Router
 
 Routers are devices that connect two or more networks. not only do they route data between networks, they also act as a gateway to other networks.
 
-![](Media/Pasted%20image%2020260826123309.png)
+![473](Media/Pasted%20image%2020260826123309.png)
 
 They primarily operate on layer 3 of the **OSI** model
 
 Routers do not know the entire network pathway. They only know the next **hop**. This is made possible by the use of a **Route Table**
 
-![](Media/Pasted%20image%2020260826123517.png)
+![497](Media/Pasted%20image%2020260826123517.png)
 
 ### Static Routing
 
@@ -131,7 +176,7 @@ Routers that have static routing have a manually configured, non - changing rout
 
 Static routing becomes messy and redundant very quickly as you try to scale the network.
 
-![](Media/Pasted%20image%2020260826124008.png)
+![508](Media/Pasted%20image%2020260826124008.png)
 
 In order to overcome this issue, **dyamic routing** was introduced.
 
@@ -167,7 +212,7 @@ You tell the protocols
 
 In dynamic routing, routers advertise about the devices they know about to the other routers
 
-![](Media/Pasted%20image%2020260826124431.png)
+![495](Media/Pasted%20image%2020260826124431.png)
 
 Some advantages of dynamic routing are :
 
@@ -181,7 +226,7 @@ Some advantages of dynamic routing are :
 
 Instead of plugging dedicated physical router ports into every separate VLAN, all traffic flows in and out over one multiplexed physical trunk link.
 
-![](Media/Pasted%20image%2020260826125109.png)
+![464](Media/Pasted%20image%2020260826125109.png)
 
 **How It Works**
 
@@ -201,7 +246,7 @@ For situations where if a router breaks down in your network and you can't affor
 
 They provide a continuous default gateway for devices on a network. Instead of configuring end-user devices with a physical router's IP address, devices point to a shared **Virtual IP (VIP)** address. HSRP or VRRP allows multiple routers to back up that VIP—if the primary active router dies, a standby router immediately takes over without breaking network connectivity or requiring configuration changes on host devices.
 
-![](Media/Pasted%20image%2020260826130026.png)
+![483](Media/Pasted%20image%2020260826130026.png)
 
 ### How They Work
 
@@ -215,4 +260,4 @@ They provide a continuous default gateway for devices on a network. Instead of c
 
 ### Security Best Practices for Routers
 
-![](Media/Pasted%20image%2020260826131330.png)
+![512](Media/Pasted%20image%2020260826131330.png)

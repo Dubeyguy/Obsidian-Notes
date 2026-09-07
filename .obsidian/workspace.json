@@ -1,0 +1,264 @@
+{
+  "main": {
+    "id": "fe5a50a7eb596523",
+    "type": "split",
+    "children": [
+      {
+        "id": "67210b2ad5ed7d94",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "60e562134a45ca73",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Cloud/Azure/AZ 104.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": false
+              },
+              "icon": "lucide-file",
+              "title": "AZ 104"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "29aab20b83c35767",
+    "type": "split",
+    "children": [
+      {
+        "id": "d05b86f5c89a98bf",
+        "type": "tabs",
+        "dimension": 52.14180206794683,
+        "children": [
+          {
+            "id": "8c092cfaf47d4848",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "5614184b81265785",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "7ee08ce11b4dddef",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      },
+      {
+        "id": "e7d79244105c6f7d",
+        "type": "tabs",
+        "dimension": 47.85819793205317,
+        "children": [
+          {
+            "id": "86bc87f8a9dc949c",
+            "type": "leaf",
+            "state": {
+              "type": "calendar",
+              "state": {},
+              "icon": "calendar-with-checkmark",
+              "title": "Calendar"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "right": {
+    "id": "cb0eceb6c5a20c9f",
+    "type": "split",
+    "children": [
+      {
+        "id": "baede46ca15ac08a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4414e8d6b72789f7",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Python/Machine learning.md",
+                "collapseAll": true,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Machine learning"
+            }
+          },
+          {
+            "id": "16bb29ab053683ed",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Python/Machine learning.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": false
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Machine learning"
+            }
+          },
+          {
+            "id": "64ea51c1cad6e30c",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "cfe400eb026889cc",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Cloud/AWS/AIF-CO1 Cheat Sheet.md",
+                "followCursor": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          },
+          {
+            "id": "6036a95cc1ea4ba6",
+            "type": "leaf",
+            "state": {
+              "type": "git-view",
+              "state": {},
+              "icon": "git-pull-request",
+              "title": "Source Control"
+            }
+          }
+        ],
+        "currentTab": 4
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "bases:Create new base": false,
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "publish:Publish changes...": false,
+      "table-editor-obsidian:Advanced Tables Toolbar": false,
+      "obsidian-git:Open Git source control": false,
+      "markdown-importer:Open format converter": false
+    }
+  },
+  "active": "60e562134a45ca73",
+  "lastOpenFiles": [
+    "Media/Pasted image 20260906144800.png",
+    "Media/Pasted image 20260906135328.png",
+    "Media/Pasted image 20260906131100.png",
+    "Cloud/Azure/GH 300.md",
+    "Media/Pasted image 20260906105517.png",
+    "Media/Pasted image 20260906105347.png",
+    "Media/Pasted image 20260906094839.png",
+    "Media/Pasted image 20260906094716.png",
+    "Cloud/Azure/AZ 104.md",
+    "Media/Pasted image 20260905130925.png",
+    "Media/Pasted image 20260905124158.png",
+    "Media/Pasted image 20260905123946.png",
+    "Media/Pasted image 20260905123256.png",
+    "Placement Prep/DSA/Arrays.md",
+    "Placement Prep/DSA/Concepts.md",
+    "Placement Prep/DSA",
+    "Devops/Bash.md",
+    "Cyber Security/Networking/Switches and VLANs.md",
+    "Media/Pasted.md",
+    "Cloud/Azure/SC 200.md",
+    "Cloud/Azure/AZ 900.md",
+    "Pasted.md",
+    "Devops/Git.md",
+    "Tools/Wireshark.md",
+    "Linux/Neo Vim.md",
+    "Cyber Security/Networking",
+    "Linux/bash scripts.md",
+    "Dictionary/weights.md",
+    "Dictionary/AI ML Terminology.md",
+    "Placement Prep/Logical Reasoning.md",
+    "Untitled.md",
+    "Untitled 1.md",
+    "Untitled.base",
+    "Python/Machine learning.md",
+    "Cyber Security/Windows AD.md",
+    "Tools",
+    "Cyber Security/Bug Bounty/Bug Bounty Process.md",
+    "Cyber Security/Bug Bounty/Bug Bounty Roadmap.md",
+    "Cyber Security/Bug Bounty/Recon Knowledge.md",
+    "Cyber Security/Bug Bounty/Tools.md",
+    "Placement Prep",
+    "Devops",
+    "Cloud/AWS/Untitled.canvas",
+    "AI",
+    "Dictionary",
+    "Media/Gemini_Generated_Video.mp4",
+    "Cloud/AWS",
+    "Linux/Untitled.canvas",
+    "Journal/16/10/Untitled.canvas",
+    "Cyber Security/Bug Bounty/Untitled.canvas",
+    "Functional and Non Functional Requirements.canvas",
+    "ADA Notes/Untitled.canvas"
+  ]
+}

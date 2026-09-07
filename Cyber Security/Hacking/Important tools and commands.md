@@ -1,0 +1,6 @@
+- Exiftool: To read and write metadata of various file types
+- Jq: To parse and easily read large amount of json data
+- Breach Forums: Website on dark web for breach info
+- https://niccs.cisa.gov/workforce-development/cyber-career-pathways-tool: For finding about roles in cyber security
+- 
+- 

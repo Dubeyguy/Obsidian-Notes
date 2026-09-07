@@ -1,0 +1,12 @@
+{
+  "accentColor": "#b70ecd",
+  "interfaceFontFamily": "Helvetica",
+  "cssTheme": "Obsidianite",
+  "theme": "obsidian",
+  "enabledCssSnippets": [
+    "jetbrains-mono"
+  ],
+  "showRibbon": true,
+  "baseFontSize": 16,
+  "showViewHeader": true
+}

@@ -1,0 +1,1 @@
+Just a simple space filled with beautiful scenery, preferably a cliff, waterfall, trees and stuff. A log or just the end of the cliff to sit on and listen to the beautiful sound of nature (only water........maybe the wind too). A radio by your side in which you can play, pause and change songs (maybe even upload songs but that could be a future prospect) 

@@ -1,0 +1,33 @@
+
+- Installed windows server 2022
+- Dual booted on spare laptop
+- Configured device name, etc
+- Configure network
+- Couldn't find any network adapters
+- Installed device drivers from dell support
+- Extracted them using 7zip
+- Put them into usb
+- Plug usb on windows server
+- Typed commands
+	- `get-volume`
+	- Find the usb drive letter(G in my case)
+	- Install the driver using a tool called `pnputil`
+	- Restart the device with `restart-computer`
+	- Still didn't list any adapters in network config
+	- Ran the `get-netadapter` command
+	- Ethernet is disabled because ethernet cable not connected
+	- Wifi is disconnected because windows server core itself does not have the wireless networking feature, only the desktop experience does. (Read docs)
+	- Now using ethernet cable instead
+	- Router too far away, connect with main laptop instead
+	- Connected ethernet, opened network connections menu `Win+R, then ncpa.cpl`
+	- Wifi properties > Sharing > Allow sharing and select the ethernet adapter
+	- Verify by pinging google.com on server
+	- Go into network settings of server (`sconfig` command and then enter `8`)
+	- Change the dns server to google (8.8.8.8) and cloudflare(1.1.1.1) since its dns was the main laptop because of ethernet connection
+- Installing ad domain services (AD DS) using the command `Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools`
+- Set up an AD forest `Install-ADDSForest -DomainName "lab.local" -InstallDns`
+- After reboot, the dns changes to loopback
+- Installed windows admin center on main laptop
+- setup windows admin center and add my server device on it
+- Create users. OUs, etc on windows admin center
+- 
